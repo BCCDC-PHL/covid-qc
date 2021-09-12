@@ -1,6 +1,6 @@
 {
-  "name": "qc-stats-cljs",
-  "version": "1.0.0",
+  "name": "covid-qc",
+  "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dfornika/cljs-starter.git"
+    "url": "git+https://github.com/dfornika/covid-qc.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/dfornika/cljs-starter/issues"
+    "url": "https://github.com/dfornika/covid-qc/issues"
   },
-  "homepage": "https://github.com/dfornika/cljs-starter#readme",
+  "homepage": "https://github.com/dfornika/covid-qc#readme",
   "devDependencies": {
     "webpack": "^5.52.1",
     "webpack-cli": "^4.8.0"
