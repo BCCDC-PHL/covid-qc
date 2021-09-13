@@ -1,20 +1,12 @@
 (ns covid-qc.core
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
+            [cljs-http.client :as http]
+            [cljs.core.async :refer [<!]]
             ["ag-grid-react" :as ag]))
 
 (defonce db (r/atom {}))
-
-
-(def runs [{:run-id "Run-01" :plate-num 1}
-           {:run-id "Run-01" :plate-num 2}
-           {:run-id "Run-02" :plate-num 3}
-           {:run-id "Run-03" :plate-num 4}
-           {:run-id "Run-04" :plate-num 5}
-           {:run-id "Run-05" :plate-num 6}
-           {:run-id "Run-05" :plate-num 7}
-           {:run-id "Run-05" :plate-num 8}
-           {:run-id "Run-06" :plate-num 9}])
 
 (def samples [{:sample-id "Sample-01"}
               {:sample-id "Sample-02"}
@@ -23,25 +15,56 @@
               {:sample-id "Sample-05"}
               {:sample-id "Sample-06"}])
 
-(defn header []
-  [:header
-   [:h1 "COVID QC"]])
+(defn load-plates-by-run []
+  (go (let [response (<! (http/get "/data/plates_by_run.json"))]
+        (swap! db assoc-in [:runs] (:body response)))))
 
-(defn runs-table [row-data]
-  [:div {:class "ag-theme-balham"
-         :style {:height 500}}
-  [:> ag/AgGridReact
-   {:rowData row-data}
-   [:> ag/AgGridColumn {:field "run-id" :sortable true :checkboxSelection true}]
-   [:> ag/AgGridColumn {:field "plate-num" :sortable true}]
+(defn header []
+  [:header {:style {:display "grid"
+                    :grid-template-columns "repeat(2, 1fr)"}}
+   [:div
+    [:h1 {:style {:font-family "Arial" :color "#004a87"}} "COVID-19 Genomics QC"]]
+   [:div {:style {:display "grid" :align-self "center" :justify-self "end"}}
+    [:img {:src "images/bccdc_logo.svg" :height "72px"}]]])
+
+
+(defn expand-run [run]
+  (let [run-id (:run_id run)
+        plate-ids (:plate_ids run)]
+    (map #(assoc {:run_id run-id} :plate_id %) plate-ids)))
+
+(defn runs-table []
+  (let [row-data (mapcat expand-run (:runs @db))]
+    [:div {:class "ag-theme-balham"
+           :style {:height 300}}
+     [:> ag/AgGridReact
+      {:rowData row-data
+       :pagination true
+       :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)}
+      [:> ag/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true}]
    ]]
-  )
+    ))
+
+(defn plates-table []
+  (let [row-data []]
+    [:div {:class "ag-theme-balham"
+           :style {:height 300}}
+     [:> ag/AgGridReact
+      {:rowData row-data
+       :pagination true
+       :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)}
+      [:> ag/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true}]
+   ]]
+    ))
+
+
 
 (defn samples-table [row-data]
   [:div {:class "ag-theme-balham"
-         :style {}}
+         :style {:height 300}}
    [:> ag/AgGridReact
-    {:rowData row-data}
+    {:rowData row-data
+     :pagination true}
     [:> ag/AgGridColumn {:field "sample-id"}]
     ]]
   )
@@ -50,14 +73,19 @@
   [:div
    [header]
    [:div {:style {:display "grid"
-                  :grid-template-columns "repeat(2, 1fr)"
+                  :grid-template-columns "repeat(3, 1fr)"
                   :gap "20px"}}
-    [runs-table runs]
+    [runs-table]
+    [plates-table]
     [samples-table samples]
     ]]
    )
 
-(rdom/render [root] (js/document.getElementById "app"))
+(defn main []
+  (load-plates-by-run)
+  (rdom/render [root] (js/document.getElementById "app")))
+
+(set! (.-onload js/window) main)
 
 (comment
   (js/console.log "Hello, world!")
