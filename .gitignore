@@ -1,4 +1,4 @@
 .cpcache
 target
 node_modules
-data
+resources/public/data
