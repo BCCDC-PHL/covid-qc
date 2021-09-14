@@ -155,6 +155,34 @@
                                            :axes [{:type "number" :position "bottom"}
                                                   {:type "number" :position "left"}]}}]]))
 
+(defn variants-histogram-plot []
+  (let [bins [[0 4] [4 8] [8 12] [12 16] [16 20] [20 24] [24 28] [28 32] [32 36] [36 40]]
+        select-data-keys #(select-keys % [:library_id :num_consensus_snvs :num_consensus_iupac])
+        data (map select-data-keys (:selected-plate-qc-summary @db))]
+    [:div
+     [:> ag-chart/AgChartsReact {:options {:legend {:enabled true}
+                                           :data data
+                                           :title {:text "Variant Histogram"}
+                                           :series [
+                                                    {:type "histogram"
+                                                     :labelKey "library_id" :labelName "Library ID"
+                                                     :xKey "num_variants_indel"
+                                                     :yName "Indels"
+                                                     :bins bins}
+                                                    {:type "histogram"
+                                                     :labelKey "library_id" :labelName "Library ID"
+                                                     :xKey "num_consensus_iupac"
+                                                     :yName "Ambiguous"
+                                                     :bins bins}
+                                                    {:type "histogram"
+                                                     :labelKey "library_id" :labelName "Library ID"
+                                                     :xKey "num_consensus_snvs"
+                                                     :yName "SNVs"
+                                                     :bins bins}
+                                                    ]
+                                           :axes [{:type "number" :position "bottom"}
+                                                  {:type "number" :position "left"}]}}]]))
+
 (defn root []
   [:div
    [header]
@@ -167,7 +195,8 @@
    [:div.plots-container {:style {:display "grid"
                                   :grid-template-columns "1fr 1fr 1fr 1fr"
                                   :gap "20px"}}
-    [completeness-by-ct-plot]]]
+    [completeness-by-ct-plot]
+    [variants-histogram-plot]]]
    )
 
 (defn main []
