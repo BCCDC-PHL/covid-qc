@@ -9,6 +9,7 @@
 
 (defonce db (r/atom {}))
 
+(def app-version "v0.0.0-alpha")
 
 (defn load-plates-by-run []
   (go (let [response (<! (http/get "/data/plates_by_run.json"))]
@@ -23,9 +24,12 @@
 
 (defn header []
   [:header {:style {:display "grid"
-                    :grid-template-columns "repeat(2, 1fr)"}}
-   [:div
-    [:h1 {:style {:font-family "Arial" :color "#004a87"}} "COVID-19 Genomics QC"]]
+                    :grid-template-columns "repeat(2, 1fr)"
+                    :align-items "center"}}
+   [:div {:style {:display "grid"
+                  :grid-template-columns "repeat(2, 1fr)"
+                  :align-items "center"}}
+    [:h1 {:style {:font-family "Arial" :color "#004a87"}} "COVID-19 Genomics QC"][:p {:style {:font-family "Arial" :color "grey" :justify-self "start"}} app-version]]
    [:div {:style {:display "grid" :align-self "center" :justify-self "end"}}
     [:img {:src "images/bccdc_logo.svg" :height "72px"}]]])
 
@@ -63,7 +67,7 @@
        :rowSelection "multiple"
        :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)
        :onSelectionChanged #(swap! db assoc-in [:selected-runs] (get-selected-rows %))}
-      [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true}]]]))
+      [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true :sort "desc"}]]]))
 
 
 (defn plates-table []
@@ -78,8 +82,8 @@
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged plate-selected
        }
-      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true}]]]
-    ))
+      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true}]]]))
+
 
 (defn round-number 
    [f]
