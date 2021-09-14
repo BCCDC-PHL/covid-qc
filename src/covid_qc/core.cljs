@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
+            [reagent.dom.server]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
             [ag-grid-react :as ag-grid]
@@ -70,8 +71,22 @@
       [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true :sort "desc"}]]]))
 
 
+(defn cell-renderer-hyperlink-button [text params]
+  (str "<button><a href=\"" (.-value params) "\" style=\"color: inherit; text-decoration: inherit\" target=\"_blank\">" text "</a></button>"))
+
+(defn cell-renderer-hyperlink-tree [params]
+  (cell-renderer-hyperlink-button "Tree" params))
+
+(defn cell-renderer-hyperlink-coverage [params]
+  (cell-renderer-hyperlink-button "Coverage" params))
+
 (defn plates-table []
-  (let [row-data (mapcat get-plates-for-run-id (map :run_id (:selected-runs @db)))]
+  (let [plates-for-selected-runs (mapcat get-plates-for-run-id (map :run_id (:selected-runs @db)))
+        add-tree-link #(assoc % :tree_link (str "/data/ncov-tools-plots/tree-snps/" (:run_id %) "_" (:plate_id %) "_tree_snps.pdf"))
+        add-coverage-link #(assoc % :coverage_link (str "/data/ncov-tools-plots/depth-by-position/" (:run_id %) "_" (:plate_id %) "_depth_by_position.pdf"))
+        with-tree-link (map add-tree-link plates-for-selected-runs)
+        with-coverage-link (map add-coverage-link with-tree-link)
+        row-data with-coverage-link]
     [:div {:class "ag-theme-balham"
            :style {:height 300}}
      [:> ag-grid/AgGridReact
@@ -82,7 +97,10 @@
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged plate-selected
        }
-      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true}]]]))
+      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true}]
+      [:> ag-grid/AgGridColumn {:field "tree_link" :headerName "Tree" :maxWidth 100 :cellRenderer cell-renderer-hyperlink-tree :type "rightAligned"}]
+      [:> ag-grid/AgGridColumn {:field "coverage_link" :headerName "Coverage" :maxWidth 120 :cellRenderer cell-renderer-hyperlink-coverage :type "rightAligned"}]
+      ]]))
 
 
 (defn round-number 
@@ -112,7 +130,7 @@
        :pagination false
        :floatingFilter true
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)}
-      [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter"}]
+      [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter" :pinned "left"}]
       [:> ag-grid/AgGridColumn {:field "well" :headerName "Well" :maxWidth 100 :sortable true :resizable true :filter "agTextColumnFilter" :sort "asc"}]
       [:> ag-grid/AgGridColumn {:field "genome_completeness" :maxWidth 120 :headerName "Completeness (%)" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
       [:> ag-grid/AgGridColumn {:field "qpcr_ct" :maxWidth 120 :headerName "qPCR Ct" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
@@ -141,8 +159,8 @@
   [:div
    [header]
    [:div {:style {:display "grid"
-                  :grid-template-columns "2fr 1fr 7fr"
-                  :gap "20px"}}
+                  :grid-template-columns "2fr 2fr 6fr"
+                  :gap "10px"}}
     [runs-table]
     [plates-table]
     [libraries-table]]
@@ -169,4 +187,5 @@
   (def data (map select-data-keys (:selected-plate-qc-summary @db)))
   (filter ct-not-nil data)
   data
+  (cell-renderer-hyperlink {})
   )
