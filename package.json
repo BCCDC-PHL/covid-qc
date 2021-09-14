@@ -22,6 +22,8 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
+    "ag-charts-community": "^4.0.1",
+    "ag-charts-react": "^4.0.0",
     "ag-grid-community": "^26.0.0",
     "ag-grid-react": "^26.0.0",
     "react": "^17.0.2",
