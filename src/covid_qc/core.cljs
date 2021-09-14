@@ -28,33 +28,42 @@
     [:img {:src "images/bccdc_logo.svg" :height "72px"}]]])
 
 
+(defn get-selected-runs [e]
+  (map #(js->clj (.-data %) :keywordize-keys true)
+       (-> e
+           .-api
+           .getSelectedNodes)))
+
 (defn expand-run [run]
   (let [run-id (:run_id run)
         plate-ids (:plate_ids run)]
     (map #(assoc {:run_id run-id} :plate_id %) plate-ids)))
 
+(defn get-plates-for-run-id [run-id]
+  (mapcat expand-run (filter #(= run-id (:run_id %)) (:runs @db))))
+
 (defn runs-table []
-  (let [row-data (mapcat expand-run (:runs @db))]
+  (let [row-data (map #(assoc {} :run_id (:run_id %)) (:runs @db))]
     [:div {:class "ag-theme-balham"
            :style {:height 300}}
      [:> ag/AgGridReact
       {:rowData row-data
        :pagination true
-       :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)}
-      [:> ag/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true}]
-   ]]
-    ))
+       :rowSelection "multiple"
+       :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)
+       :onSelectionChanged #(swap! db assoc-in [:selected-runs] (get-selected-runs %))}
+      [:> ag/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true}]]]))
 
 (defn plates-table []
-  (let [row-data []]
+  (let [row-data (mapcat get-plates-for-run-id (map :run_id (:selected-runs @db)))]
     [:div {:class "ag-theme-balham"
            :style {:height 300}}
      [:> ag/AgGridReact
       {:rowData row-data
        :pagination true
+       :rowSelection "single"
        :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)}
-      [:> ag/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true}]
-   ]]
+      [:> ag/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true}]]]
     ))
 
 
@@ -90,4 +99,6 @@
 (comment
   (js/console.log "Hello, world!")
   (js/alert "Alert!")
+  (map #(assoc {} :run_id (:run_id %)) (:runs @db))
+  (#(assoc {} :run_id (:run_id %)) (last (:runs @db)))
   )
