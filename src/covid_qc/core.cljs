@@ -12,16 +12,25 @@
 
 (def app-version "v0.0.0-alpha")
 
+(def url-prefix "")
+
 (defn load-plates-by-run []
-  (go (let [response (<! (http/get "/data/plates_by_run.json"))]
+  (go (let [response (<! (http/get (str url-prefix "/data/plates_by_run.json")))]
         (swap! db assoc-in [:runs] (:body response)))))
 
 (defn load-qc-summary [run-id plate-id]
   (go (let [filename (str run-id "_" plate-id "_summary_qc.json")
-            path (str "/data/ncov-tools-summary/" filename)
+            path (str url-prefix "/data/ncov-tools-summary/" filename)
             response (<! (http/get path))]
         (if (= 200 (:status response))
           (swap! db assoc-in [:selected-plate-qc-summary] (:body response))))))
+
+(defn load-amplicon-coverage [run-id library-id]
+  (go (let [filename (str library-id "_amplicon_depth.json")
+            path (str url-prefix "/data/ncov-tools-qc-sequencing/" run-id "/" filename)
+            response (<! (http/get path))]
+        (if (= 200 (:status response))
+          (swap! db assoc-in [:selected-amplicon-coverage (keyword library-id)] (:body response))))))
 
 (defn header []
   [:header {:style {:display "grid"
@@ -32,7 +41,7 @@
                   :align-items "center"}}
     [:h1 {:style {:font-family "Arial" :color "#004a87"}} "COVID-19 Genomics QC"][:p {:style {:font-family "Arial" :color "grey" :justify-self "start"}} app-version]]
    [:div {:style {:display "grid" :align-self "center" :justify-self "end"}}
-    [:img {:src "images/bccdc_logo.svg" :height "72px"}]]])
+    [:img {:src "images/bccdc_logo.svg" :height "64px"}]]])
 
 
 (defn get-selected-rows [e]
@@ -47,7 +56,17 @@
     (if (:selected-plate @db)
       (load-qc-summary (:run_id (:selected-plate @db)) (:plate_id (:selected-plate @db)))
       (swap! db assoc-in [:selected-plate-qc-summary] nil)
-  )))
+      )))
+
+(defn library-selected [e]
+  (do
+    (swap! db assoc-in [:selected-libraries] (get-selected-rows e))
+    (if (:selected-libraries @db)
+      (do
+        (swap! db assoc-in [:selected-amplicon-coverage] nil)
+        (doall
+         (map #(apply load-amplicon-coverage %) (map (juxt :run_id :library_id) (:selected-libraries @db)))))
+      (swap! db assoc-in [:selected-amplicon-coverage] nil))))
 
 (defn expand-run [run]
   (let [run-id (:run_id run)
@@ -60,7 +79,7 @@
 (defn runs-table []
   (let [row-data (map #(assoc {} :run_id (:run_id %)) (:runs @db))]
     [:div {:class "ag-theme-balham"
-           :style {:height 300}}
+           :style {:height 256}}
      [:> ag-grid/AgGridReact
       {:rowData row-data
        :pagination false
@@ -82,13 +101,13 @@
 
 (defn plates-table []
   (let [plates-for-selected-runs (mapcat get-plates-for-run-id (map :run_id (:selected-runs @db)))
-        add-tree-link #(assoc % :tree_link (str "/data/ncov-tools-plots/tree-snps/" (:run_id %) "_" (:plate_id %) "_tree_snps.pdf"))
-        add-coverage-link #(assoc % :coverage_link (str "/data/ncov-tools-plots/depth-by-position/" (:run_id %) "_" (:plate_id %) "_depth_by_position.pdf"))
+        add-tree-link #(assoc % :tree_link (str url-prefix "/data/ncov-tools-plots/tree-snps/" (:run_id %) "_" (:plate_id %) "_tree_snps.pdf"))
+        add-coverage-link #(assoc % :coverage_link (str url-prefix "/data/ncov-tools-plots/depth-by-position/" (:run_id %) "_" (:plate_id %) "_depth_by_position.pdf"))
         with-tree-link (map add-tree-link plates-for-selected-runs)
         with-coverage-link (map add-coverage-link with-tree-link)
         row-data with-coverage-link]
     [:div {:class "ag-theme-balham"
-           :style {:height 300}}
+           :style {:height 256}}
      [:> ag-grid/AgGridReact
       {:rowData row-data
        :pagination false
@@ -97,10 +116,10 @@
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged plate-selected
        }
-      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true}]
-      [:> ag-grid/AgGridColumn {:field "tree_link" :headerName "Tree" :maxWidth 100 :cellRenderer cell-renderer-hyperlink-tree :type "rightAligned"}]
-      [:> ag-grid/AgGridColumn {:field "coverage_link" :headerName "Coverage" :maxWidth 120 :cellRenderer cell-renderer-hyperlink-coverage :type "rightAligned"}]
-      ]]))
+      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :filter "agNumberColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelectionFilteredOnly true :sort "desc"}]
+      [:> ag-grid/AgGridColumn {:headerName "Plots"}
+       [:> ag-grid/AgGridColumn {:field "tree_link" :headerName "Tree" :maxWidth 100 :cellRenderer cell-renderer-hyperlink-tree}]
+       [:> ag-grid/AgGridColumn {:field "coverage_link" :headerName "Coverage" :maxWidth 120 :cellRenderer cell-renderer-hyperlink-coverage}]]]]))
 
 
 (defn round-number 
@@ -124,13 +143,16 @@
         truncated-ct (map #(update % :qpcr_ct round-number) concat-qc-flags)
         row-data (map #(update % :genome_completeness (comp round-number proportion-to-percent)) truncated-ct)]
     [:div {:class "ag-theme-balham"
-           :style {:height 300}}
+           :style {:height 256}}
      [:> ag-grid/AgGridReact
       {:rowData row-data
        :pagination false
+       :rowSelection "multiple"
        :floatingFilter true
-       :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)}
-      [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter" :pinned "left"}]
+       :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
+       :onSelectionChanged library-selected
+       }
+      [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter" :pinned "left" :checkboxSelection true :headerCheckboxSelectionFilteredOnly true}]
       [:> ag-grid/AgGridColumn {:field "well" :headerName "Well" :maxWidth 100 :sortable true :resizable true :filter "agTextColumnFilter" :sort "asc"}]
       [:> ag-grid/AgGridColumn {:field "genome_completeness" :maxWidth 120 :headerName "Completeness (%)" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
       [:> ag-grid/AgGridColumn {:field "qpcr_ct" :maxWidth 120 :headerName "qPCR Ct" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
@@ -156,7 +178,7 @@
                                                   {:type "number" :position "left"}]}}]]))
 
 (defn variants-histogram-plot []
-  (let [bins [[0 4] [4 8] [8 12] [12 16] [16 20] [20 24] [24 28] [28 32] [32 36] [36 40]]
+  (let [bins [[0 1] [1 2] [2 4] [4 6] [6 8] [8 12] [12 14] [14 16] [16 18] [18 20] [20 22] [22 24] [24 26] [26 28] [28 30] [30 32] [32 34] [34 36] [36 38] [38 40] [40 42]]
         select-data-keys #(select-keys % [:library_id :num_consensus_snvs :num_consensus_iupac])
         data (map select-data-keys (:selected-plate-qc-summary @db))]
     [:div
@@ -183,6 +205,47 @@
                                            :axes [{:type "number" :position "bottom"}
                                                   {:type "number" :position "left"}]}}]]))
 
+;; The following adapted from:
+;;https://github.com/weavejester/medley/blob/d723afcb18e1fae27f3b68a25c7a151569159a9e/src/medley/core.cljc#L78-L80
+(defn- editable? [coll]
+  (satisfies? cljs.core.IEditableCollection coll))
+
+;; The following taken :
+;; https://github.com/weavejester/medley/blob/d723afcb18e1fae27f3b68a25c7a151569159a9e/src/medley/core.cljc#L82-L86
+(defn- reduce-map [f coll]
+  (let [coll' (if (record? coll) (into {} coll) coll)]
+    (if (editable? coll')
+      (persistent! (reduce-kv (f assoc!) (transient (empty coll')) coll'))
+      (reduce-kv (f assoc) (empty coll') coll'))))
+
+;; The following taken :
+;; https://github.com/weavejester/medley/blob/d723afcb18e1fae27f3b68a25c7a151569159a9e/src/medley/core.cljc#L94-L99
+(defn map-kv
+  "Maps a function over the key/value pairs of an associative collection. Expects
+  a function that takes two arguments, the key and value, and returns the new
+  key and value as a collection of two elements."
+  [f coll]
+  (reduce-map (fn [xf] (fn [m k v] (let [[k v] (f k v)] (xf m k v)))) coll))
+
+
+(defn amplicon-coverage-plot []
+  (let [selected-coverages (:selected-amplicon-coverage @db)
+        select-depth #(get % :mean_depth)
+        samples (keys selected-coverages)
+        transform #(map (partial assoc {}) (repeat %) (map select-depth %2))
+        sample-depths (map #(apply transform %) (into [] selected-coverages))
+        amplicons (map #(assoc {} :amplicon_num %) (map str (range 1 30)))
+        data (reduce #(map merge % %2) amplicons sample-depths)]
+    [:div
+     [:> ag-chart/AgChartsReact {:options {:legend {:enabled true}
+                                           :data data
+                                           :title {:text "Amplicon Coverage"}
+                                           :series [
+                                                    {:type "column"
+                                                     :xKey "amplicon_num"
+                                                     :yKeys (map name samples) :yNames (map name samples)
+                                                     :grouped true}]}}]]))
+
 (defn root []
   [:div
    [header]
@@ -193,10 +256,14 @@
     [plates-table]
     [libraries-table]]
    [:div.plots-container {:style {:display "grid"
-                                  :grid-template-columns "1fr 1fr 1fr 1fr"
-                                  :gap "20px"}}
+                                  :grid-template-columns "1fr 1fr"
+                                  :gap "10px"}}
     [completeness-by-ct-plot]
-    [variants-histogram-plot]]]
+    [variants-histogram-plot]]
+   [:div.plots-container {:style {:display "grid"
+                                  :grid-template-columns "1fr"
+                                  :gap "10px"}}
+    [amplicon-coverage-plot]]]
    )
 
 (defn main []
