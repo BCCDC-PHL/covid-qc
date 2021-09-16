@@ -6,7 +6,8 @@
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
             [ag-grid-react :as ag-grid]
-            [ag-charts-react :as ag-chart]))
+            [ag-charts-react :as ag-chart]
+            [cljs.pprint :refer [pprint]]))
 
 (defonce db (r/atom {}))
 
@@ -31,6 +32,15 @@
             response (<! (http/get path))]
         (if (= 200 (:status response))
           (swap! db assoc-in [:selected-amplicon-coverage (keyword library-id)] (:body response))))))
+
+(defn debug-view []
+  (let [current-debug (:debug-view @db)
+        toggle-debug #(swap! db assoc :debug-view (not current-debug))]
+    [:div
+     [:button {:on-click toggle-debug} "Toggle Debug View"]
+     [:div.debug {:style {:background-color "#CDCDCD" :display (if (:debug-view @db) "block" "none")}}
+      [:pre [:code {:style {:font-family "monospace" }}
+             (with-out-str (pprint (select-keys @db [:debug-view :selected-runs :selected-plate :selected-libraries])))]]]]))
 
 (defn header []
   [:header {:style {:display "grid"
@@ -85,7 +95,7 @@
        :pagination false
        :floatingFilter true
        :rowSelection "multiple"
-       :onFirstDataRendered #(. (. % -api) sizeColumnsToFit)
+       :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged #(swap! db assoc-in [:selected-runs] (get-selected-rows %))}
       [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true :sort "desc"}]]]))
 
@@ -205,28 +215,6 @@
                                            :axes [{:type "number" :position "bottom"}
                                                   {:type "number" :position "left"}]}}]]))
 
-;; The following adapted from:
-;;https://github.com/weavejester/medley/blob/d723afcb18e1fae27f3b68a25c7a151569159a9e/src/medley/core.cljc#L78-L80
-(defn- editable? [coll]
-  (satisfies? cljs.core.IEditableCollection coll))
-
-;; The following taken :
-;; https://github.com/weavejester/medley/blob/d723afcb18e1fae27f3b68a25c7a151569159a9e/src/medley/core.cljc#L82-L86
-(defn- reduce-map [f coll]
-  (let [coll' (if (record? coll) (into {} coll) coll)]
-    (if (editable? coll')
-      (persistent! (reduce-kv (f assoc!) (transient (empty coll')) coll'))
-      (reduce-kv (f assoc) (empty coll') coll'))))
-
-;; The following taken :
-;; https://github.com/weavejester/medley/blob/d723afcb18e1fae27f3b68a25c7a151569159a9e/src/medley/core.cljc#L94-L99
-(defn map-kv
-  "Maps a function over the key/value pairs of an associative collection. Expects
-  a function that takes two arguments, the key and value, and returns the new
-  key and value as a collection of two elements."
-  [f coll]
-  (reduce-map (fn [xf] (fn [m k v] (let [[k v] (f k v)] (xf m k v)))) coll))
-
 
 (defn amplicon-coverage-plot []
   (let [selected-coverages (:selected-amplicon-coverage @db)
@@ -263,7 +251,8 @@
    [:div.plots-container {:style {:display "grid"
                                   :grid-template-columns "1fr"
                                   :gap "10px"}}
-    [amplicon-coverage-plot]]]
+    [amplicon-coverage-plot]]
+   [debug-view]]
    )
 
 (defn main []
