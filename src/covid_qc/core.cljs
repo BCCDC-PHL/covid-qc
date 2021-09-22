@@ -1,6 +1,6 @@
 (ns covid-qc.core
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [reagent.core :as r]
+  (:require [reagent.core :as r] 
             [reagent.dom :as rdom]
             [reagent.dom.server]
             [cljs-http.client :as http]
@@ -11,7 +11,7 @@
 
 (defonce db (r/atom {}))
 
-(def app-version "v0.1.0")
+(def app-version "v0.2.0")
 
 (def url-prefix "")
 
@@ -19,12 +19,20 @@
   (go (let [response (<! (http/get (str url-prefix "/data/plates_by_run.json")))]
         (swap! db assoc-in [:runs] (:body response)))))
 
-(defn load-qc-summary [run-id plate-id]
+(defn load-ncov-tools-qc-summary [run-id plate-id]
   (go (let [filename (str run-id "_" plate-id "_summary_qc.json")
             path (str url-prefix "/data/ncov-tools-summary/" filename)
             response (<! (http/get path))]
         (if (= 200 (:status response))
-          (swap! db assoc-in [:selected-plate-qc-summary] (:body response))))))
+          (swap! db assoc-in [:selected-plate-ncov-tools-qc-summary] (:body response))
+          (swap! db assoc-in [:selected-plate-ncov-tools-qc-summary] nil)))))
+
+(defn load-artic-qc-summary [run-id]
+  (go (let [filename (str run-id "_qc.json")
+            path (str url-prefix "/data/artic-qc/" filename)
+            response (<! (http/get path))]
+        (if (= 200 (:status response))
+          (swap! db assoc-in [:selected-run-artic-qc-summary] (:body response))))))
 
 (defn load-amplicon-coverage [run-id library-id]
   (go (let [filename (str library-id "_amplicon_depth.json")
@@ -40,7 +48,7 @@
      [:button {:on-click toggle-debug} "Toggle Debug View"]
      [:div.debug {:style {:background-color "#CDCDCD" :display (if (:debug-view @db) "block" "none")}}
       [:pre [:code {:style {:font-family "monospace" }}
-             (with-out-str (pprint (select-keys @db [:debug-view :selected-runs :selected-plate :selected-libraries])))]]]]))
+             (with-out-str (pprint (select-keys @db [:debug-view :selected-runs :selected-plate :selected-libraries :selected-run-artic-qc-summary :selected-plate-ncov-tools-qc-summary])))]]]]))
 
 (defn header []
   [:header {:style {:display "grid"
@@ -64,9 +72,18 @@
   (do
     (swap! db assoc-in [:selected-plate] (first (get-selected-rows e)))
     (if (:selected-plate @db)
-      (load-qc-summary (:run_id (:selected-plate @db)) (:plate_id (:selected-plate @db)))
-      (swap! db assoc-in [:selected-plate-qc-summary] nil)
+      (do
+        (load-artic-qc-summary (:run_id (:selected-plate @db)))
+        (load-ncov-tools-qc-summary (:run_id (:selected-plate @db)) (:plate_id (:selected-plate @db))))
+      (do
+        (swap! db assoc-in [:selected-plate-ncov-tools-qc-summary] nil)
+        (swap! db assoc-in [:selected-run-artic-qc-summary] nil))
+      
       )))
+
+(defn run-selected [e]
+  (do
+    (swap! db assoc-in [:selected-runs] (get-selected-rows e))))
 
 (defn library-selected [e]
   (do
@@ -96,7 +113,7 @@
        :floatingFilter true
        :rowSelection "multiple"
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
-       :onSelectionChanged #(swap! db assoc-in [:selected-runs] (get-selected-rows %))}
+       :onSelectionChanged run-selected}
       [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true :sort "desc"}]]]))
 
 
@@ -147,11 +164,12 @@
 
 (defn libraries-table []
   (let [join-by-comma #(clojure.string/join ", " %)
-        selected-qc (:selected-plate-qc-summary @db)
-        added-well (map #(assoc % :well (library-id-to-well (:library_id %))) selected-qc)
+        selected-ncov-tools-qc (map #(dissoc % :genome_completeness) (:selected-plate-ncov-tools-qc-summary @db))
+        selected-artic-qc (filter #(= (:plate_id %) (:plate_id (:selected-plate @db))) (:selected-run-artic-qc-summary @db))
+        selected-merged-qc (map #(apply merge %) (vals (group-by :library_id (concat selected-ncov-tools-qc selected-artic-qc))))
+        added-well (map #(assoc % :well (library-id-to-well (:library_id %))) selected-merged-qc)
         concat-qc-flags (map #(update % :qc_pass join-by-comma) added-well)
-        truncated-ct (map #(update % :qpcr_ct round-number) concat-qc-flags)
-        row-data (map #(update % :genome_completeness (comp round-number proportion-to-percent)) truncated-ct)]
+        row-data (map #(update % :qpcr_ct round-number) concat-qc-flags)]
     [:div {:class "ag-theme-balham"
            :style {:height 256}}
      [:> ag-grid/AgGridReact
@@ -164,15 +182,16 @@
        }
       [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter" :pinned "left" :checkboxSelection true :headerCheckboxSelectionFilteredOnly true}]
       [:> ag-grid/AgGridColumn {:field "well" :headerName "Well" :maxWidth 100 :sortable true :resizable true :filter "agTextColumnFilter" :sort "asc"}]
-      [:> ag-grid/AgGridColumn {:field "genome_completeness" :maxWidth 120 :headerName "Completeness (%)" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "qpcr_ct" :maxWidth 120 :headerName "qPCR Ct" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "genome_completeness" :maxWidth 140 :headerName "Completeness (%)" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "num_aligned_reads" :maxWidth 120 :headerName "Aligned Reads" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "qpcr_ct" :maxWidth 100 :headerName "qPCR Ct" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
       [:> ag-grid/AgGridColumn {:field "qc_pass" :headerName "QC Flags" :sortable true :resizable true :filter "agTextColumnFilter"}]
       ]]
     ))
 
 (defn completeness-by-ct-plot []
   (let [select-data-keys #(select-keys % [:library_id :qpcr_ct :genome_completeness])
-        data (map select-data-keys (:selected-plate-qc-summary @db))
+        data (map select-data-keys (:selected-plate-ncov-tools-qc-summary @db))
         ct-not-nil #(not (nil? (:qpcr_ct %)))
         percent-completeness (map #(update % :genome_completeness proportion-to-percent) data)
         data-filtered (filter ct-not-nil percent-completeness)]
@@ -190,7 +209,7 @@
 (defn variants-histogram-plot []
   (let [bins [[0 1] [1 2] [2 4] [4 6] [6 8] [8 12] [12 14] [14 16] [16 18] [18 20] [20 22] [22 24] [24 26] [26 28] [28 30] [30 32] [32 34] [34 36] [36 38] [38 40] [40 42]]
         select-data-keys #(select-keys % [:library_id :num_consensus_snvs :num_consensus_iupac])
-        data (map select-data-keys (:selected-plate-qc-summary @db))]
+        data (map select-data-keys (:selected-plate-ncov-tools-qc-summary @db))]
     [:div
      [:> ag-chart/AgChartsReact {:options {:legend {:enabled true}
                                            :data data
@@ -252,8 +271,9 @@
                                   :grid-template-columns "1fr"
                                   :gap "10px"}}
     [amplicon-coverage-plot]]
-   [debug-view]]
-   )
+   #_[debug-view]
+   ]
+)
 
 (defn main []
   (load-plates-by-run)
@@ -262,15 +282,5 @@
 (set! (.-onload js/window) main)
 
 (comment
-  (js/console.log "Hello, world!")
-  (js/alert "Alert!")
-  (map #(assoc {} :run_id (:run_id %)) (:runs @db))
-  (#(assoc {} :run_id (:run_id %)) (last (:runs @db)))
-  (load-qc-summary "210106_M00325_0281_000000000-G6WT2" 74)
-  (defn ct-not-nil [x] (not (nil? (:qpcr_ct x))))
-  (defn select-data-keys [x] (select-keys x [:qpcr_ct :genome_completeness]))
-  (def data (map select-data-keys (:selected-plate-qc-summary @db)))
-  (filter ct-not-nil data)
-  data
-  (cell-renderer-hyperlink {})
+  
   )
