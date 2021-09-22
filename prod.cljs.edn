@@ -2,4 +2,4 @@
   :mode :build-once
   :auto-bundle :webpack}
 {:main covid-qc.core
- :optimizations :advanced}
+ :optimizations :simple}
