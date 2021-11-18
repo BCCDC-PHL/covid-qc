@@ -43,16 +43,27 @@
 
 
 (defn load-plates-by-run []
-  (go (let [response (<! (http/get (str url-prefix "/data/plates_by_run.json")))]
+  (go (let [response (<! (http/get (str url-prefix "data/plates_by_run.json")))]
         (swap! db assoc-in [:runs] (:body response)))))
 
 
 (defn load-ncov-tools-qc-summary [run-id plate-id]
   (go (let [filename (str run-id "_" plate-id "_summary_qc.json")
-            path (str url-prefix "/data/ncov-tools-summary/" filename)
+            path (str url-prefix "data/ncov-tools-summary/" filename)
             response (<! (http/get path))]
         (if (= 200 (:status response))
           (swap! db assoc-in [:ncov-tools-qc-summaries plate-id] (:body response))))))
+
+
+(defn summarize-artic-qc-summary-by-plate [artic-qc-summary plate-id]
+  "Take a full artic 'qc' and compute some relevant summary stats for a specific plate"
+  (let [artic-qc-summary-for-plate (filter #(= (:plate_id %) plate-id) artic-qc-summary)
+        num-libraries (count artic-qc-summary-for-plate)
+        failed-libraries (filter #(< (/ (:genome_completeness %) 100) genome-completeness-qc-threshold) artic-qc-summary-for-plate)
+        num-failed (count failed-libraries)
+        percent-failed (* (/ num-failed num-libraries) 100)]
+    {:num_libraries num-libraries
+     :percent_failed percent-failed}))
 
 
 (defn summarize-ncov-tools-qc-summary [ncov-tools-qc-summary]
@@ -61,8 +72,9 @@
         failed-libraries (filter #(< (:genome_completeness %) genome-completeness-qc-threshold) ncov-tools-qc-summary)
         num-failed (count failed-libraries)
         percent-failed (* (/ num-failed num-libraries) 100)
-        avg-ct-failed (mean (filter #(and (not (nil? %)) (not (zero? %))) (map :qpcr_ct failed-libraries)))
-        num-ct-avail (count (filter #(not (nil? (:qpcr_ct %))) ncov-tools-qc-summary))
+        avail-ct-failed (filter #(and (not (nil? %)) (not (zero? %))) (map :qpcr_ct failed-libraries))
+        avg-ct-failed (mean avail-ct-failed)
+        num-ct-avail-failed (count avail-ct-failed)
         num-excess-ambig (count (filter #(contains? (set (:qc_pass %)) "EXCESS_AMBIGUITY") ncov-tools-qc-summary))
         percent-excess-ambig (* (/ num-excess-ambig num-libraries) 100)
         avg-median-depth (mean (map :median_sequencing_depth ncov-tools-qc-summary))]
@@ -70,13 +82,13 @@
      :percent_failed percent-failed
      :percent_excess_ambiguity percent-excess-ambig
      :avg_ct_failed_samples avg-ct-failed
-     :num_ct_available num-ct-avail
+     :num_ct_available_failed_samples num-ct-avail-failed
      :avg_median_depth_coverage avg-median-depth}))
 
 
 (defn load-artic-qc-summary [run-id]
   (go (let [filename (str run-id "_qc.json")
-            path (str url-prefix "/data/artic-qc/" filename)
+            path (str url-prefix "data/artic-qc/" filename)
             response (<! (http/get path))]
         (if (= 200 (:status response))
           (swap! db assoc-in [:artic-qc-summaries run-id] (:body response))))))
@@ -84,7 +96,7 @@
 
 (defn load-amplicon-coverage [run-id library-id]
   (go (let [filename (str library-id "_amplicon_depth.json")
-            path (str url-prefix "/data/ncov-tools-qc-sequencing/" run-id "/" filename)
+            path (str url-prefix "data/ncov-tools-qc-sequencing/" run-id "/" filename)
             response (<! (http/get path))]
         (if (= 200 (:status response))
           (swap! db assoc-in [:selected-amplicon-coverage (keyword library-id)] (:body response))))))
@@ -109,7 +121,7 @@
                   :align-items "center"}}
     [:h1 {:style {:font-family "Arial" :color "#004a87"}} "COVID-19 Genomics QC"][:p {:style {:font-family "Arial" :color "grey" :justify-self "start"}} app-version]]
    [:div {:style {:display "grid" :align-self "center" :justify-self "end"}}
-    [:img {:src "images/bccdc_logo.svg" :height "48px"}]]])
+    [:img {:src (str url-prefix "/images/bccdc_logo.svg") :height "48px"}]]])
 
 
 (defn get-selected-rows [e]
@@ -140,13 +152,12 @@
         currently-selected-runs (filter #(in? currently-selected-run-ids (:run_id %)) (:runs @db))
         newly-selected-runs (filter #(in? newly-selected-run-ids (:run_id %)) (:runs @db))
         newly-selected-runs-expanded (mapcat expand-run newly-selected-runs) ;; ({:run_id a :plate_id 1} {:run_id a :plate_id 2} {:run_id b :plate_id 1} {:run_id b :plate_id 2})
-        currently-loaded-ncov-tools-qc-summary-plate-ids (:ncov-tools-qc-summaries @db)
-        ]
+        currently-loaded-ncov-tools-qc-summary-plate-ids (:ncov-tools-qc-summaries @db)]
     (do
       (doall
        (map #(load-ncov-tools-qc-summary (:run_id %) (:plate_id %)) newly-selected-runs-expanded))
       (doall
-       (map #(load-artic-qc-summary (:run_id %)) newly-selected-runs-expanded))
+       (map load-artic-qc-summary newly-selected-run-ids))
       (swap! db assoc-in [:selected-run-ids] currently-selected-run-ids))))
 
 
@@ -179,7 +190,7 @@
        :rowSelection "multiple"
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged run-selected}
-      [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :minWidth 265 :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelection true :sort "desc"}]
+      [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :minWidth 265 :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :sort "desc"}]
       [:> ag-grid/AgGridColumn {:field "num_fastq_symlink_pairs" :headerName "Fastq Pairs" :maxWidth 100 :resizable true :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
       [:> ag-grid/AgGridColumn {:field "num_covid19_production_samples_in_samplesheet" :headerName "SampleSheet Count" :maxWidth 150 :resizable true :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]]]))
 
@@ -199,20 +210,21 @@
 (defn plates-table []
   (let [selected-runs (filter #(in? (:selected-run-ids @db) (:run_id %)) (:runs @db))
         plates-for-selected-runs (mapcat get-plates-for-run-id (map :run_id selected-runs))
-        add-tree-link #(assoc % :tree_link (str url-prefix "/data/ncov-tools-plots/tree-snps/" (:run_id %) "_" (:plate_id %) "_tree_snps.pdf"))
-        add-coverage-link #(assoc % :coverage_profile_link (str url-prefix "/data/ncov-tools-plots/depth-by-position/" (:run_id %) "_" (:plate_id %) "_depth_by_position.pdf"))
-        add-heatmap-link #(assoc % :coverage_heatmap_link (str url-prefix "/data/ncov-tools-plots/depth-heatmap/" (:run_id %) "_" (:plate_id %) "_amplicon_coverage_heatmap.pdf"))
+        add-tree-link #(assoc % :tree_link (str url-prefix "data/ncov-tools-plots/tree-snps/" (:run_id %) "_" (:plate_id %) "_tree_snps.pdf"))
+        add-coverage-link #(assoc % :coverage_profile_link (str url-prefix "data/ncov-tools-plots/depth-by-position/" (:run_id %) "_" (:plate_id %) "_depth_by_position.pdf"))
+        add-heatmap-link #(assoc % :coverage_heatmap_link (str url-prefix "data/ncov-tools-plots/depth-heatmap/" (:run_id %) "_" (:plate_id %) "_amplicon_coverage_heatmap.pdf"))
+        merge-artic-qc-summary #(merge % (summarize-artic-qc-summary-by-plate (get (:artic-qc-summaries @db) (:run_id %)) (:plate_id %)))
         merge-ncov-tools-qc-summary-summary #(merge % (summarize-ncov-tools-qc-summary (get (:ncov-tools-qc-summaries @db) (:plate_id %))))
         row-data (->> plates-for-selected-runs
                       (map add-tree-link)
                       (map add-coverage-link)
                       (map add-heatmap-link)
                       (map merge-ncov-tools-qc-summary-summary)
+                      (map merge-artic-qc-summary)
                       (map #(update % :percent_failed round-number))
                       (map #(update % :percent_excess_ambiguity round-number))
                       (map #(update % :avg_ct_failed_samples round-number))
-                      (map #(update % :avg_median_depth_coverage round-number))
-                      )]
+                      (map #(update % :avg_median_depth_coverage round-number)))]
     [:div {:class "ag-theme-balham"
            :style {:height 256}}
      [:> ag-grid/AgGridReact
@@ -221,19 +233,17 @@
        :floatingFilter true
        :rowSelection "single"
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
-       :onSelectionChanged plate-selected
-       }
+       :onSelectionChanged plate-selected}
       [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :maxWidth 145 :filter "agNumberColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelectionFilteredOnly true :sort "desc"}]
-      [:> ag-grid/AgGridColumn {:field "tree_link" :headerName "Tree" :maxWidth 65 :cellRenderer cell-renderer-hyperlink-tree}]
-      [:> ag-grid/AgGridColumn {:field "coverage_profile_link" :headerName "Coverage Profile" :maxWidth 120 :cellRenderer cell-renderer-hyperlink-coverage-profile}]
-      [:> ag-grid/AgGridColumn {:field "coverage_heatmap_link" :headerName "Coverage Heatmap" :maxWidth 135 :cellRenderer cell-renderer-hyperlink-coverage-heatmap}]
+      [:> ag-grid/AgGridColumn {:field "tree_link" :headerName "Tree" :maxWidth 72 :cellRenderer cell-renderer-hyperlink-tree}]
+      [:> ag-grid/AgGridColumn {:field "coverage_profile_link" :headerName "Coverage Profile" :maxWidth 130 :cellRenderer cell-renderer-hyperlink-coverage-profile}]
+      [:> ag-grid/AgGridColumn {:field "coverage_heatmap_link" :headerName "Coverage Heatmap" :maxWidth 145 :cellRenderer cell-renderer-hyperlink-coverage-heatmap}]
       [:> ag-grid/AgGridColumn {:field "num_libraries" :headerName "Num. Libraries" :maxWidth 125 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "percent_failed" :headerName "% Failed" :maxWidth 125 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "percent_excess_ambiguity" :headerName "% Excess Ambig." :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "avg_ct_failed_samples" :headerName "Avg. Ct (Failed)" :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "num_ct_available" :headerName "Num. Cts Avail." :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "avg_median_depth_coverage" :headerName "Avg. Median Depth" :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      ]]))
+      [:> ag-grid/AgGridColumn {:field "percent_failed" :headerName "% Failed" :maxWidth 95 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "percent_excess_ambiguity" :headerName "% Excess Ambig." :maxWidth 140 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "avg_ct_failed_samples" :headerName "Avg. Ct (Failed)" :maxWidth 130 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "num_ct_available_failed_samples" :headerName "Num. Ct Avail. (Failed)" :maxWidth 165 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
+      [:> ag-grid/AgGridColumn {:field "avg_median_depth_coverage" :headerName "Avg. Median Depth" :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]]]))
 
 
 (defn library-id-to-well [lib-id]
