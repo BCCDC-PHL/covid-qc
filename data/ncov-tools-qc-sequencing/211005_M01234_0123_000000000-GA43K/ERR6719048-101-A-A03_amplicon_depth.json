@@ -1,0 +1,234 @@
+[
+  {
+    "start": 54, 
+    "end": 1100, 
+    "amplicon_num": 1, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 310.1328735
+  }, 
+  {
+    "start": 1205, 
+    "end": 2153, 
+    "amplicon_num": 2, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 329.7626648
+  }, 
+  {
+    "start": 2266, 
+    "end": 3144, 
+    "amplicon_num": 3, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 402.5888367
+  }, 
+  {
+    "start": 3257, 
+    "end": 4167, 
+    "amplicon_num": 4, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 394.8648376
+  }, 
+  {
+    "start": 4262, 
+    "end": 5257, 
+    "amplicon_num": 5, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 372.6914673
+  }, 
+  {
+    "start": 5359, 
+    "end": 6283, 
+    "amplicon_num": 6, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 411.2662354
+  }, 
+  {
+    "start": 6380, 
+    "end": 7298, 
+    "amplicon_num": 7, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 255.4597015
+  }, 
+  {
+    "start": 7401, 
+    "end": 8253, 
+    "amplicon_num": 8, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 543.7828369
+  }, 
+  {
+    "start": 8385, 
+    "end": 9303, 
+    "amplicon_num": 9, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 345.7396545
+  }, 
+  {
+    "start": 9400, 
+    "end": 10343, 
+    "amplicon_num": 10, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 358.4846191
+  }, 
+  {
+    "start": 10451, 
+    "end": 11372, 
+    "amplicon_num": 11, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 435.3724365
+  }, 
+  {
+    "start": 11469, 
+    "end": 12450, 
+    "amplicon_num": 12, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 376.1957092
+  }, 
+  {
+    "start": 12560, 
+    "end": 13509, 
+    "amplicon_num": 13, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 346.4099121
+  }, 
+  {
+    "start": 13621, 
+    "end": 14540, 
+    "amplicon_num": 14, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 404.9107666
+  }, 
+  {
+    "start": 14641, 
+    "end": 15608, 
+    "amplicon_num": 15, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 387.1665039
+  }, 
+  {
+    "start": 15735, 
+    "end": 16624, 
+    "amplicon_num": 16, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 445.4724426
+  }, 
+  {
+    "start": 16720, 
+    "end": 17622, 
+    "amplicon_num": 17, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 405.539917
+  }, 
+  {
+    "start": 17754, 
+    "end": 18596, 
+    "amplicon_num": 18, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 459.9809875
+  }, 
+  {
+    "start": 18706, 
+    "end": 19574, 
+    "amplicon_num": 19, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 343.4285583
+  }, 
+  {
+    "start": 19678, 
+    "end": 20553, 
+    "amplicon_num": 20, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 348.8491516
+  }, 
+  {
+    "start": 20698, 
+    "end": 21532, 
+    "amplicon_num": 21, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 330.6882629
+  }, 
+  {
+    "start": 21642, 
+    "end": 22511, 
+    "amplicon_num": 22, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 220.2278442
+  }, 
+  {
+    "start": 22612, 
+    "end": 23518, 
+    "amplicon_num": 23, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 333.4414978
+  }, 
+  {
+    "start": 23631, 
+    "end": 24633, 
+    "amplicon_num": 24, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 362.8962097
+  }, 
+  {
+    "start": 24736, 
+    "end": 25690, 
+    "amplicon_num": 25, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 346.4329224
+  }, 
+  {
+    "start": 25790, 
+    "end": 26744, 
+    "amplicon_num": 26, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 322.5335388
+  }, 
+  {
+    "start": 26857, 
+    "end": 27784, 
+    "amplicon_num": 27, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 291.4703369
+  }, 
+  {
+    "start": 27894, 
+    "end": 28677, 
+    "amplicon_num": 28, 
+    "pool": 2, 
+    "strand": "+", 
+    "mean_depth": 378.2886353
+  }, 
+  {
+    "start": 29007, 
+    "end": 29768, 
+    "amplicon_num": 29, 
+    "pool": 1, 
+    "strand": "+", 
+    "mean_depth": 295.3929138
+  }
+]

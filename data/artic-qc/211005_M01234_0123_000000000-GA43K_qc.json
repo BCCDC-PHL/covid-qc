@@ -1,0 +1,82 @@
+[
+  {
+    "library_id": "ERR6719049-101-A-A08", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 98.83, 
+    "longest_no_N_run": 8250, 
+    "num_aligned_reads": 77132, 
+    "fasta": "ERR6719049-101-A-A08.consensus.fa", 
+    "bam": "ERR6719049-101-A-A08.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719046-101-A-A05", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 98.93, 
+    "longest_no_N_run": 5744, 
+    "num_aligned_reads": 72170, 
+    "fasta": "ERR6719046-101-A-A05.consensus.fa", 
+    "bam": "ERR6719046-101-A-A05.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719051-101-A-A02", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 98.26, 
+    "longest_no_N_run": 6349, 
+    "num_aligned_reads": 73302, 
+    "fasta": "ERR6719051-101-A-A02.consensus.fa", 
+    "bam": "ERR6719051-101-A-A02.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719045-101-A-A01", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 99.08, 
+    "longest_no_N_run": 13579, 
+    "num_aligned_reads": 72722, 
+    "fasta": "ERR6719045-101-A-A01.consensus.fa", 
+    "bam": "ERR6719045-101-A-A01.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719050-101-A-A04", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 98.78, 
+    "longest_no_N_run": 6362, 
+    "num_aligned_reads": 77092, 
+    "fasta": "ERR6719050-101-A-A04.consensus.fa", 
+    "bam": "ERR6719050-101-A-A04.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719047-101-A-A07", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 98.84, 
+    "longest_no_N_run": 6348, 
+    "num_aligned_reads": 73980, 
+    "fasta": "ERR6719047-101-A-A07.consensus.fa", 
+    "bam": "ERR6719047-101-A-A07.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719048-101-A-A03", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 98.72, 
+    "longest_no_N_run": 6351, 
+    "num_aligned_reads": 72990, 
+    "fasta": "ERR6719048-101-A-A03.consensus.fa", 
+    "bam": "ERR6719048-101-A-A03.mapped.primertrimmed.downsampled.sorted.bam"
+  }, 
+  {
+    "library_id": "ERR6719044-101-A-A06", 
+    "plate_id": 101, 
+    "run_id": "211005_M01234_0123_000000000-GA43K", 
+    "genome_completeness": 99.0, 
+    "longest_no_N_run": 6364, 
+    "num_aligned_reads": 76330, 
+    "fasta": "ERR6719044-101-A-A06.consensus.fa", 
+    "bam": "ERR6719044-101-A-A06.mapped.primertrimmed.downsampled.sorted.bam"
+  }
+]

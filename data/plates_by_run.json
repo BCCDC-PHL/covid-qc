@@ -1,0 +1,10 @@
+[
+  {
+    "run_id": "211005_M01234_0123_000000000-GA43K",
+    "num_fastq_symlink_pairs": 8,
+    "num_covid19_production_samples_in_samplesheet": 8,
+    "plate_ids": [
+      101
+    ]
+  }
+]
