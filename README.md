@@ -9,10 +9,10 @@ identifiers for the libraries that were used to generate the demo dataset.
 
 ## Development Setup
 
-This site is written in [ClojureScript](https://clojurescript.org/), a dialect of [Clojure](https://clojure.org/) that compiles down to JavaScript. The ClojureScript compiler requires 
+This site is written in [ClojureScript](https://clojurescript.org/), a dialect of [Clojure](https://clojure.org/) that compiles down to JavaScript.  
 
 ### Prerequisites - JDK, Clojure & NPM
-JDK 8 or later. Follow [this guide](https://clojure.org/guides/getting_started) to installing clojure on your platform before starting development on this site.
+The ClojureScript compiler requires JDK 8 or later. Follow [this guide](https://clojure.org/guides/getting_started) to installing clojure on your platform before starting development on this site.
 
 The 'Node Package Manager' ([NPM](https://www.npmjs.com/)) is required for installing JavaScript dependencies. Follow [this guide](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) to install NPM on your platform.
 
@@ -31,11 +31,11 @@ Once CIDER has been installed, open the [src/covid_qc/core.cljs](src/covid_qc/co
 M-x cider-jack-in-cljs
 ```
 
-![doc/images/cider-jack-in-cljs.png]()
+![cider-jack-in-cljs](doc/images/cider-jack-in-cljs.png)
 
 A new CIDER REPL buffer will be created, resembling this:
 
-![doc/images/cider-figwheel-startup.png]()
+![cider-figwheel-startup](doc/images/cider-figwheel-startup.png)
 
 ### VS Code - Calva
 [Calva](https://calva.io/) is a clojure(script) development environment for [VS Code](https://code.visualstudio.com/). Search for `calva` in the VS Code Extensions marketplace to install it.
