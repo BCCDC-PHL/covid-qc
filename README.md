@@ -57,3 +57,30 @@ The expression is automatically compiled to JavaScript and evaluated in the brow
 
 ### VS Code - Calva
 [Calva](https://calva.io/) is a clojure(script) development environment for [VS Code](https://code.visualstudio.com/). Search for `calva` in the VS Code Extensions marketplace to install it.
+
+Open the `covid-qc` folder in VS Code. Open the VS Code Command Palette (`Ctrl-Shift-P`), and search for `calva`:
+
+![vscode-command-palette-calva-start](doc/images/vscode-command-palette-calva-start.png)
+
+Select "Calva: Start a Project REPL and Connect".
+
+When prompted for a project type, select 'deps.edn + Figwheel Main':
+
+![vscode-command-palette-calva-select-project-type](doc/images/vscode-command-palette-calva-select-project-type.png)
+
+When prompted to select aliases, make sure that no aliases are selected, and click 'OK':
+
+![vscode-command-palette-calva-select-aliases](doc/images/vscode-command-palette-calva-select-aliases.png)
+
+When prompted to select builds, select 'dev' and click 'OK':
+
+![vscode-command-palette-calva-select-builds](doc/images/vscode-command-palette-calva-select-builds.png)
+
+A calva evaluation results output window should appear:
+
+![vscode-calva-output-window](doc/images/vscode-calva-output-window.png)
+
+...and there should be messages printed to the terminal showing that the site has been compiled and served at http://localhost:9500
+
+![vscode-calva-terminal](doc/images/vscode-calva-output-terminal.png)
+
