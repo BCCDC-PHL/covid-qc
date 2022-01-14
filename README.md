@@ -82,5 +82,5 @@ A calva evaluation results output window should appear:
 
 ...and there should be messages printed to the terminal showing that the site has been compiled and served at http://localhost:9500
 
-![vscode-calva-terminal](doc/images/vscode-calva-output-terminal.png)
+![vscode-calva-terminal](doc/images/vscode-calva-terminal.png)
 
