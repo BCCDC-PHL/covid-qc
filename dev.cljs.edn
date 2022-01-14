@@ -1,4 +1,5 @@
 ^{:css-dirs ["resources/public/css"]
   :auto-bundle :webpack}
 {:main covid-qc.core
+ :preloads [devtools.preload]
  :source-map true}
