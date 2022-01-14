@@ -37,5 +37,23 @@ A new CIDER REPL buffer will be created, resembling this:
 
 ![cider-figwheel-startup](doc/images/cider-figwheel-startup.png)
 
+At the same time, a local dev instance of the site will be served from http://localhost:9500.
+
+From the `core.cljs` buffer, type `C-c M-n M-n` to switch the current REPL namespace to `covid-qc.core`. The REPL prompt should update to show the current namespace:
+
+![repl-ns-covid-qc-core](doc/images/repl-ns-covid-qc-core.png)
+
+You should now have a live REPL connection to the site. Open your browser's console:
+
+![chrome-console-01](doc/images/chrome-console-01.png)
+
+Now, in your REPL, type `(js/console.log "Hello, world")` and press enter:
+
+![repl-hello-world](doc/images/repl-hello-world.png)
+
+The expression is automatically compiled to JavaScript and evaluated in the browser. The message should appear in your browser console:
+
+![console-hello-world](doc/images/console-hello-world.png)
+
 ### VS Code - Calva
 [Calva](https://calva.io/) is a clojure(script) development environment for [VS Code](https://code.visualstudio.com/). Search for `calva` in the VS Code Extensions marketplace to install it.
