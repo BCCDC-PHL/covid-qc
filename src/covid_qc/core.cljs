@@ -13,7 +13,7 @@
 (defonce db (r/atom {}))
 
 
-(def app-version "v0.3.0")
+(def app-version "v0.3.1")
 
 
 (def url-prefix "")
