@@ -121,7 +121,7 @@
                   :align-items "center"}}
     [:h1 {:style {:font-family "Arial" :color "#004a87"}} "COVID-19 Genomics QC"][:p {:style {:font-family "Arial" :color "grey" :justify-self "start"}} app-version]]
    [:div {:style {:display "grid" :align-self "center" :justify-self "end"}}
-    [:img {:src (str url-prefix "/images/bccdc_logo.svg") :height "48px"}]]])
+    [:img {:src (str url-prefix "images/bccdc_logo.svg") :height "48px"}]]])
 
 
 (defn get-selected-rows [e]
@@ -186,13 +186,12 @@
      [:> ag-grid/AgGridReact
       {:rowData row-data
        :pagination false
-       :floatingFilter true
        :rowSelection "multiple"
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged run-selected}
-      [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :minWidth 265 :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :sort "desc"}]
-      [:> ag-grid/AgGridColumn {:field "num_fastq_symlink_pairs" :headerName "Fastq Pairs" :maxWidth 100 :resizable true :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "num_covid19_production_samples_in_samplesheet" :headerName "SampleSheet Count" :maxWidth 150 :resizable true :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]]]))
+      [:> ag-grid/AgGridColumn {:field "run_id" :headerName "Run ID" :minWidth 265 :resizable true :filter "agTextColumnFilter" :sortable true :checkboxSelection true :sort "desc" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "num_fastq_symlink_pairs" :headerName "Fastq Pairs" :maxWidth 100 :resizable true :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "num_covid19_production_samples_in_samplesheet" :headerName "SampleSheet Count" :maxWidth 150 :resizable true :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]]]))
 
 
 (defn cell-renderer-hyperlink-button [text params]
@@ -230,20 +229,19 @@
      [:> ag-grid/AgGridReact
       {:rowData row-data
        :pagination false
-       :floatingFilter true
        :rowSelection "single"
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged plate-selected}
-      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :maxWidth 145 :filter "agNumberColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelectionFilteredOnly true :sort "desc"}]
+      [:> ag-grid/AgGridColumn {:field "plate_id" :headerName "Plate Number" :maxWidth 145 :filter "agNumberColumnFilter" :sortable true :checkboxSelection true :headerCheckboxSelectionFilteredOnly true :sort "desc" :floatingFilter true}]
       [:> ag-grid/AgGridColumn {:field "tree_link" :headerName "Tree" :maxWidth 72 :cellRenderer cell-renderer-hyperlink-tree}]
-      [:> ag-grid/AgGridColumn {:field "coverage_profile_link" :headerName "Coverage Profile" :maxWidth 130 :cellRenderer cell-renderer-hyperlink-coverage-profile}]
+      [:> ag-grid/AgGridColumn {:field "coverage_profile_link" :headerName "Coverage Profile" :maxWidth 130 :cellRenderer cell-renderer-hyperlink-coverage-profile }]
       [:> ag-grid/AgGridColumn {:field "coverage_heatmap_link" :headerName "Coverage Heatmap" :maxWidth 145 :cellRenderer cell-renderer-hyperlink-coverage-heatmap}]
-      [:> ag-grid/AgGridColumn {:field "num_libraries" :headerName "Num. Libraries" :maxWidth 125 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "percent_failed" :headerName "% Failed" :maxWidth 95 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "percent_excess_ambiguity" :headerName "% Excess Ambig." :maxWidth 140 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "avg_ct_failed_samples" :headerName "Avg. Ct (Failed)" :maxWidth 130 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "num_ct_available_failed_samples" :headerName "Num. Ct Avail. (Failed)" :maxWidth 165 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "avg_median_depth_coverage" :headerName "Avg. Median Depth" :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn"}]]]))
+      [:> ag-grid/AgGridColumn {:field "num_libraries" :headerName "Num. Libraries" :maxWidth 125 :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "percent_failed" :headerName "% Failed" :maxWidth 95 :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "percent_excess_ambiguity" :headerName "% Excess Ambig." :maxWidth 140 :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "avg_ct_failed_samples" :headerName "Avg. Ct (Failed)" :maxWidth 130 :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "num_ct_available_failed_samples" :headerName "Num. Ct Avail. (Failed)" :maxWidth 165 :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "avg_median_depth_coverage" :headerName "Avg. Median Depth" :maxWidth 150 :filter "agNumberColumnFilter" :sortable true :type "numericColumn" :floatingFilter true}]]]))
 
 
 (defn library-id-to-well [lib-id]
@@ -269,16 +267,15 @@
       {:rowData row-data
        :pagination false
        :rowSelection "multiple"
-       :floatingFilter true
        :onFirstDataRendered #(-> % .-api .sizeColumnsToFit)
        :onSelectionChanged library-selected
        }
-      [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter" :pinned "left" :checkboxSelection true :headerCheckboxSelectionFilteredOnly true}]
-      [:> ag-grid/AgGridColumn {:field "well" :headerName "Well" :maxWidth 100 :sortable true :resizable true :filter "agTextColumnFilter" :sort "asc"}]
-      [:> ag-grid/AgGridColumn {:field "genome_completeness" :maxWidth 140 :headerName "Completeness (%)" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "num_aligned_reads" :maxWidth 120 :headerName "Aligned Reads" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "qpcr_ct" :maxWidth 100 :headerName "qPCR Ct" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn"}]
-      [:> ag-grid/AgGridColumn {:field "qc_pass" :headerName "QC Flags" :sortable true :resizable true :filter "agTextColumnFilter"}]
+      [:> ag-grid/AgGridColumn {:field "library_id" :headerName "Library ID" :maxWidth 200 :sortable true :resizable true :filter "agTextColumnFilter" :pinned "left" :checkboxSelection true :headerCheckboxSelectionFilteredOnly true :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "well" :headerName "Well" :maxWidth 100 :sortable true :resizable true :filter "agTextColumnFilter" :sort "asc" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "genome_completeness" :maxWidth 140 :headerName "Completeness (%)" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "num_aligned_reads" :maxWidth 120 :headerName "Aligned Reads" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "qpcr_ct" :maxWidth 100 :headerName "qPCR Ct" :sortable true :resizable true :filter "agNumberColumnFilter" :type "numericColumn" :floatingFilter true}]
+      [:> ag-grid/AgGridColumn {:field "qc_pass" :headerName "QC Flags" :sortable true :resizable true :filter "agTextColumnFilter" :floatingFilter true}]
       ]]
     ))
 
