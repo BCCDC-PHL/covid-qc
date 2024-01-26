@@ -1,5 +1,8 @@
 .cpcache
 .nrepl-port
+.shadow-cljs
 target
 node_modules
 resources/public/data
+resources/public/js
+scripts/copy_data.sh
