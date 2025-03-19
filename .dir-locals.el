@@ -1,4 +1,4 @@
-((clojurescript-mode . ((cider-clojure-cli-aliases . ":dev")
+((nil . ((cider-clojure-cli-aliases . ":dev")
 			(cider-preferred-build-tool . clojure-cli)
 			(cider-default-cljs-repl . custom)
 			(cider-custom-cljs-repl-init-form . "(do (user/cljs-repl))")
